@@ -2,56 +2,46 @@ pipeline {
     agent any
 
     environment {
-        ARM_SUBSCRIPTION_ID = credentials('ARM_SUBSCRIPTION_ID')
-        ARM_CLIENT_ID       = credentials('ARM_CLIENT_ID')
-        ARM_CLIENT_SECRET   = credentials('ARM_CLIENT_SECRET')
-        ARM_TENANT_ID       = credentials('ARM_TENANT_ID')
+        ARM_SUBSCRIPTION_ID = credentials('azure-subscription-id')
+        ARM_CLIENT_ID       = credentials('azure-client-id')
+        ARM_CLIENT_SECRET   = credentials('azure-client-secret')
+        ARM_TENANT_ID       = credentials('azure-tenant-id')
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/prashanth3516/terraform-budget-alert.git'
+                checkout scm
             }
         }
 
         stage('Terraform Init') {
             steps {
-                sh '''
-                  cd budget-alert
-                  terraform init
-                '''
+                sh 'terraform init'
             }
         }
 
         stage('Terraform Validate') {
             steps {
-                sh '''
-                  cd budget-alert
-                  terraform validate
-                '''
+                sh 'terraform validate'
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                sh """
-                  cd budget-alert
-                  terraform plan -out=tfplan \
-                    -var subscription_id=$ARM_SUBSCRIPTION_ID \
-                    -var client_id=$ARM_CLIENT_ID \
-                    -var client_secret=$ARM_CLIENT_SECRET \
-                    -var tenant_id=$ARM_TENANT_ID
-                """
+                sh '''
+                terraform plan -out=tfplan \
+                  -var subscription_id=$ARM_SUBSCRIPTION_ID \
+                  -var client_id=$ARM_CLIENT_ID \
+                  -var client_secret=$ARM_CLIENT_SECRET \
+                  -var tenant_id=$ARM_TENANT_ID
+                '''
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                sh """
-                  cd budget-alert
-                  terraform apply -auto-approve tfplan
-                """
+                sh 'terraform apply -auto-approve tfplan'
             }
         }
 
@@ -60,14 +50,7 @@ pipeline {
                 expression { return params.DESTROY == true }
             }
             steps {
-                sh """
-                  cd budget-alert
-                  terraform destroy -auto-approve \
-                    -var subscription_id=$ARM_SUBSCRIPTION_ID \
-                    -var client_id=$ARM_CLIENT_ID \
-                    -var client_secret=$ARM_CLIENT_SECRET \
-                    -var tenant_id=$ARM_TENANT_ID
-                """
+                sh 'terraform destroy -auto-approve'
             }
         }
     }
