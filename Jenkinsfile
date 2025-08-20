@@ -8,6 +8,10 @@ pipeline {
         ARM_TENANT_ID       = credentials('azure-tenant-id')
     }
 
+    parameters {
+        booleanParam(name: 'DESTROY', defaultValue: false, description: 'Set true to destroy Terraform resources instead of apply')
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -28,12 +32,18 @@ pipeline {
         }
 
         stage('Terraform Plan') {
+            when {
+                expression { return !params.DESTROY }
+            }
             steps {
                 sh 'terraform plan -out=tfplan'
             }
         }
 
         stage('Terraform Apply') {
+            when {
+                expression { return !params.DESTROY }
+            }
             steps {
                 sh 'terraform apply -auto-approve tfplan'
             }
@@ -41,7 +51,7 @@ pipeline {
 
         stage('Terraform Destroy') {
             when {
-                expression { return params.DESTROY == true }
+                expression { return params.DESTROY }
             }
             steps {
                 sh 'terraform destroy -auto-approve'
