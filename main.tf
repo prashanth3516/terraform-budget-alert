@@ -17,7 +17,7 @@ provider "azurerm" {
 }
 
 variable "budget_name" {
-  default = "vmss-budget-alert"
+  default = "vmss-budget-alert-2"
 }
 
 variable "budget_amount" {
