@@ -11,15 +11,15 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/prashanth3516/Terraform-repo.git'
+                git branch: 'main', url: 'https://github.com/prashanth3516/terraform-budget-alert.git'
             }
         }
 
         stage('Terraform Init') {
             steps {
                 sh '''
-                cd vmss-alert
-                terraform init
+                  cd budget-alert
+                  terraform init
                 '''
             }
         }
@@ -27,38 +27,31 @@ pipeline {
         stage('Terraform Validate') {
             steps {
                 sh '''
-                cd vmss-alert
-                terraform validate
+                  cd budget-alert
+                  terraform validate
                 '''
             }
         }
 
         stage('Terraform Plan') {
             steps {
-                sh '''
-                cd vmss-alert
-                terraform plan -out=tfplan
-                '''
+                sh """
+                  cd budget-alert
+                  terraform plan -out=tfplan \
+                    -var subscription_id=$ARM_SUBSCRIPTION_ID \
+                    -var client_id=$ARM_CLIENT_ID \
+                    -var client_secret=$ARM_CLIENT_SECRET \
+                    -var tenant_id=$ARM_TENANT_ID
+                """
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                script {
-                    try {
-                        sh '''
-                        cd vmss-alert
-                        terraform apply -auto-approve tfplan
-                        '''
-                    } catch (Exception e) {
-                        echo "Terraform apply failed – trying import..."
-                        sh '''
-                        cd vmss-alert
-                        terraform import azurerm_consumption_budget_subscription.vmss_budget "/subscriptions/${ARM_SUBSCRIPTION_ID}/providers/Microsoft.Consumption/budgets/vmss-budget-alert" || true
-                        terraform apply -auto-approve tfplan
-                        '''
-                    }
-                }
+                sh """
+                  cd budget-alert
+                  terraform apply -auto-approve tfplan
+                """
             }
         }
 
@@ -67,10 +60,14 @@ pipeline {
                 expression { return params.DESTROY == true }
             }
             steps {
-                sh '''
-                cd vmss-alert
-                terraform destroy -auto-approve
-                '''
+                sh """
+                  cd budget-alert
+                  terraform destroy -auto-approve \
+                    -var subscription_id=$ARM_SUBSCRIPTION_ID \
+                    -var client_id=$ARM_CLIENT_ID \
+                    -var client_secret=$ARM_CLIENT_SECRET \
+                    -var tenant_id=$ARM_TENANT_ID
+                """
             }
         }
     }
