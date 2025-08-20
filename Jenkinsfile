@@ -9,7 +9,7 @@ pipeline {
     }
 
     parameters {
-        booleanParam(name: 'DESTROY', defaultValue: false, description: 'Set true to destroy Terraform resources instead of apply')
+        booleanParam(name: 'DESTROY', defaultValue: true, description: 'Set true to destroy Terraform resources instead of apply')
     }
 
     stages {
