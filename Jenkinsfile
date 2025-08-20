@@ -18,7 +18,7 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 sh '''
-                cd budget-alert
+                cd vmss-alert
                 terraform init
                 '''
             }
@@ -27,7 +27,7 @@ pipeline {
         stage('Terraform Validate') {
             steps {
                 sh '''
-                cd budget-alert
+                cd vmss-alert
                 terraform validate
                 '''
             }
@@ -36,7 +36,7 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 sh '''
-                cd budget-alert
+                cd vmss-alert
                 terraform plan -out=tfplan
                 '''
             }
@@ -47,13 +47,13 @@ pipeline {
                 script {
                     try {
                         sh '''
-                        cd budget-alert
+                        cd vmss-alert
                         terraform apply -auto-approve tfplan
                         '''
                     } catch (Exception e) {
                         echo "Terraform apply failed – trying import..."
                         sh '''
-                        cd budget-alert
+                        cd vmss-alert
                         terraform import azurerm_consumption_budget_subscription.vmss_budget "/subscriptions/${ARM_SUBSCRIPTION_ID}/providers/Microsoft.Consumption/budgets/vmss-budget-alert" || true
                         terraform apply -auto-approve tfplan
                         '''
@@ -68,7 +68,7 @@ pipeline {
             }
             steps {
                 sh '''
-                cd budget-alert
+                cd vmss-alert
                 terraform destroy -auto-approve
                 '''
             }
